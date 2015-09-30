@@ -14,6 +14,7 @@
 		<script src="common/CSS3DRenderer.js"></script>
         <script src="common/jquery-2.1.4.min.js"></script>
         <script src="common/vis.min.js"></script>
+        <script src="common/stats.min.js"></script>
         
         <img src="images/fermat_logo.png" id="splash"/>
         

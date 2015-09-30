@@ -336,6 +336,8 @@ function ViewManager() {
     };
     
     /**
+     * Created by Miguel Celedon
+     * Modified by Ricardo Delgado 
      * Creates a Tile
      * @param   {Number}     i ID of the tile (index in table)
      * @returns {DOMElement} The drawable element that represents the tile
@@ -402,11 +404,11 @@ function ViewManager() {
                 },
                 groupIcon = {
                     src : base + 'icons/group/' + levels[j][0] + '/icon_' + group + '.png',
-                    w : 28 * scale, h : 28 * scale
+                    // w : 28 * scale, h : 28 * scale
                 },
                 typeIcon = {
                     src : base + 'icons/type/' + levels[j][0] + '/' + type.toLowerCase() + '_logo.png',
-                    w : 28 * scale, h : 28 * scale
+                   // w : 28 * scale, h : 28 * scale
                 },
                 ring = {
                     src : base + 'rings/' + levels[j][0] + '/' + state + '_diff_' + difficulty + '.png'

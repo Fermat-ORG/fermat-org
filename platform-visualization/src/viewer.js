@@ -5,7 +5,8 @@ var table = [],
     renderer,
     objects = [],
     headers = null,
-    actualView = 'stack';
+    actualView = 'stack',
+    stats = null;
 
 //Global constants
 var TILE_DIMENSION = {
@@ -14,7 +15,7 @@ var TILE_DIMENSION = {
 },
     TILE_SPACING = 20;
 
-$.ajax({
+/*$.ajax({
     url: "get_plugins.php",
     method: "GET"
 }).success(
@@ -27,9 +28,9 @@ $.ajax({
             setTimeout(animate, 500);
         });
     }
-);
+);*/
 
-/*var l = JSON.parse(testData);
+var l = JSON.parse(testData);
     
     viewManager.fillTable(l);
     
@@ -37,7 +38,7 @@ $.ajax({
             $('#splash').remove();
             init();
             setTimeout( animate, 500);
-        });*/
+        });
 
 function init() {
 
@@ -61,7 +62,8 @@ function init() {
     camera = new Camera(new THREE.Vector3(0, 0, dimensions.columnWidth * dimensions.groupsQtty * TILE_DIMENSION.width),
         renderer,
         render);
-
+    // uncomment for testing
+    create_stats();
 
     //
 
@@ -380,7 +382,25 @@ function animate() {
     TWEEN.update();
 
     camera.update();
+
+    if ( stats ) stats.update();
 }
+     /**
+     * Created by Ricardo Delgado
+     * create stats for performance testing 
+     */
+   function create_stats(){ 
+
+    stats = new Stats();
+    stats.setMode(0);
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left    = '0px';
+    stats.domElement.style.top   = '0px';
+    stats.domElement.style.display  = 'block';
+    var contai = document.getElementById("container");
+    contai.appendChild(stats.domElement);
+
+    }
 
 function render() {
 
