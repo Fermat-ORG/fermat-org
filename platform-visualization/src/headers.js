@@ -105,7 +105,35 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
         
         self.show(_duration);
     };
-    
+
+    /**
+     * created by Ricardo Delgado
+     * Screen shows the head
+     * @param {Number} duration Milliseconds of fading
+     */
+    this.transformHead = function( duration ) {
+        var _duration = duration || 2000,
+            i, l, container;
+        helper.hide('stackContainer', _duration / 2);
+
+        
+        /*container = document.createElement('div');
+        container.id = 'logoContainer';
+        container.style.position = 'absolute';
+        container.style.opacity = 0;
+        container.style.width = '100%';
+        container.style.height = '100%';
+        container.style.zIndex = 5;
+
+        var geometry    = new THREE.CubeGeometry( 1, 1, 5);
+        var material    = new THREE.MeshBasicMaterial();
+        var cube    = new THREE.Mesh( geometry, material );
+        cube.position.set(5,5,30);
+        scene.add(cube);
+        container.appendChild(renderer.domElement);
+        document.getElementById('container').appendChild(container);*/
+ 
+    };
     /**
      * Shows the headers as a fade
      * @param {Number} duration Milliseconds of fading
