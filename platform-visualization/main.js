@@ -381,7 +381,35 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
         
         self.show(_duration);
     };
-    
+
+    /**
+     * created by Ricardo Delgado
+     * Screen shows the head
+     * @param {Number} duration Milliseconds of fading
+     */
+    this.transformHead = function( duration ) {
+        var _duration = duration || 2000,
+            i, l, container;
+        helper.hide('stackContainer', _duration / 2);
+
+        
+        /*container = document.createElement('div');
+        container.id = 'logoContainer';
+        container.style.position = 'absolute';
+        container.style.opacity = 0;
+        container.style.width = '100%';
+        container.style.height = '100%';
+        container.style.zIndex = 5;
+
+        var geometry    = new THREE.CubeGeometry( 1, 1, 5);
+        var material    = new THREE.MeshBasicMaterial();
+        var cube    = new THREE.Mesh( geometry, material );
+        cube.position.set(5,5,30);
+        scene.add(cube);
+        container.appendChild(renderer.domElement);
+        document.getElementById('container').appendChild(container);*/
+ 
+    };
     /**
      * Shows the headers as a fade
      * @param {Number} duration Milliseconds of fading
@@ -1072,7 +1100,7 @@ var l = JSON.parse(testData);
     viewManager.fillTable(l);
     
     $('#splash').fadeTo(2000, 0, function() {
-            $('#splash').remove();
+            $('#splash').hide();
             init();
             setTimeout( animate, 500);
         });
@@ -1100,13 +1128,14 @@ function init() {
         renderer,
         render);
     // uncomment for testing
-    create_stats();
+    //create_stats();
 
     //
 
     $('#backButton').click(function() {
         changeView(viewManager.targets.table);
     });
+
     $('#legendButton').click(function() {
 
         var legend = document.getElementById('legend');
@@ -1119,10 +1148,20 @@ function init() {
             $(legend).fadeTo(1000, 1);
         }
     });
-    $('#tableViewButton').click(function() {
-        if(actualView === 'stack')
+
+   $('#browserRightButton').click(function() {
+       if ( actualView === 'stack' )
             goToView('table');
-        else
+       else 
+            goToView('stack');
+    });
+    
+    $('#browserLeftButton').click(function() {
+       if ( actualView === 'head' ) ;
+       //     goToView('stack');
+       else if ( actualView === 'stack' )
+            goToView('head');
+       else if ( actualView === 'table' )
             goToView('stack');
     });
     $('#container').click(onClick);
@@ -1139,43 +1178,68 @@ function init() {
 }
 
 /**
+ * 
  * Changes the actual state of the viewer
  * @param {String} name The name of the target state
  */
 function goToView(name) {
     
-    var tableButton;
+    var browserButton;
     
     actualView = name;
     
     switch(name) {
         case 'table':
             
-            tableButton = document.getElementById('tableViewButton');
+            browserButton = document.getElementById('browserRightButton');
             var legendBtn = document.getElementById('legendButton');
             
             headers.transformTable();
             legendBtn.style.display = 'block';
             $(legendBtn).fadeTo(1000, 1);
             
-            $(tableButton).fadeTo(1000, 0, function(){ 
-                tableButton.style.display = 'block';
-                tableButton.innerHTML = 'View Dependencies';
+            $(browserButton).fadeTo(1000, 1, function(){ 
+                browserButton.style.display = 'block';
+                browserButton.innerHTML = 'View Dependencies';
             });
-            $(tableButton).fadeTo(1000, 1);
+
+
             
             break;
+        case 'head':
+
+           $('#splash').show();
+           //$('#splash').fadeTo(500, 1);
+           headers.transformHead();          
+           browserButton = document.getElementById('browserRightButton');
+
+           $(browserButton).fadeTo(1000, 1, function(){ 
+            $(browserButton).css({ 'bottom':'450px', 'display':'block' });
+           var t1 = new Tween(browserButton.style,'left',Tween.elasticEaseOut,0,100,4,'px');
+               t1.start();
+                browserButton.innerHTML = 'View Dependencies';
+            });
+
+           $('#browserLeftButton').fadeTo(1000, 1, function()
+           { 
+             
+             browserButton = document.getElementById('browserLeftButton');
+           $(browserButton).css({ 'bottom':'450px', 'display':'block' });
+                browserButton.innerHTML = 'Book';
+            });
+
+            break;
         case 'stack':
-            
-            tableButton = document.getElementById('tableViewButton');
+
+            browserButton = document.getElementById('browserRightButton');
             
             headers.transformStack();
             
-            $(tableButton).fadeTo(1000, 0, function(){ 
-                tableButton.style.display = 'block';
-                tableButton.innerHTML = 'View Table';
+            $(browserButton).fadeTo(1000, 1, function(){ 
+            $(browserButton).css({ 'bottom':'10px', 'display':'block' });
+            browserButton.innerHTML = 'View Table';
             });
-            $(tableButton).fadeTo(1000, 1);
+
             
             break;
         default:
@@ -1850,11 +1914,11 @@ function ViewManager() {
                 },
                 groupIcon = {
                     src : base + 'icons/group/' + levels[j][0] + '/icon_' + group + '.png',
-                    // w : 28 * scale, h : 28 * scale
+                     w : 24 * scale, h : 24 * scale
                 },
                 typeIcon = {
                     src : base + 'icons/type/' + levels[j][0] + '/' + type.toLowerCase() + '_logo.png',
-                   // w : 28 * scale, h : 28 * scale
+                    w : 24 * scale, h : 24 * scale
                 },
                 ring = {
                     src : base + 'rings/' + levels[j][0] + '/' + state + '_diff_' + difficulty + '.png'
@@ -1865,7 +1929,7 @@ function ViewManager() {
                 },
                 nameText = {
                     text : table[id].name,
-                    font : (10 * scale) + 'px Arial'
+                    font : (12 * scale) + 'px Arial'
                 },
                 layerText = {
                     text : table[id].layer,
@@ -1873,7 +1937,7 @@ function ViewManager() {
                 },
                 authorText = {
                     text : table[id].authorRealName || table[id].author || '',
-                    font : (3.5 * scale) + 'px Arial'
+                    font : (4 * scale) + 'px Arial'
                 };
             
             if(id === 185)

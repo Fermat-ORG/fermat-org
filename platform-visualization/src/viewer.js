@@ -35,7 +35,7 @@ var l = JSON.parse(testData);
     viewManager.fillTable(l);
     
     $('#splash').fadeTo(2000, 0, function() {
-            $('#splash').remove();
+            $('#splash').hide();
             init();
             setTimeout( animate, 500);
         });
@@ -63,13 +63,14 @@ function init() {
         renderer,
         render);
     // uncomment for testing
-    create_stats();
+    //create_stats();
 
     //
 
     $('#backButton').click(function() {
         changeView(viewManager.targets.table);
     });
+
     $('#legendButton').click(function() {
 
         var legend = document.getElementById('legend');
@@ -82,10 +83,20 @@ function init() {
             $(legend).fadeTo(1000, 1);
         }
     });
-    $('#tableViewButton').click(function() {
-        if(actualView === 'stack')
+
+   $('#browserRightButton').click(function() {
+       if ( actualView === 'stack' )
             goToView('table');
-        else
+       else 
+            goToView('stack');
+    });
+    
+    $('#browserLeftButton').click(function() {
+       if ( actualView === 'head' ) ;
+       //     goToView('stack');
+       else if ( actualView === 'stack' )
+            goToView('head');
+       else if ( actualView === 'table' )
             goToView('stack');
     });
     $('#container').click(onClick);
@@ -102,43 +113,68 @@ function init() {
 }
 
 /**
+ * 
  * Changes the actual state of the viewer
  * @param {String} name The name of the target state
  */
 function goToView(name) {
     
-    var tableButton;
+    var browserButton;
     
     actualView = name;
     
     switch(name) {
         case 'table':
             
-            tableButton = document.getElementById('tableViewButton');
+            browserButton = document.getElementById('browserRightButton');
             var legendBtn = document.getElementById('legendButton');
             
             headers.transformTable();
             legendBtn.style.display = 'block';
             $(legendBtn).fadeTo(1000, 1);
             
-            $(tableButton).fadeTo(1000, 0, function(){ 
-                tableButton.style.display = 'block';
-                tableButton.innerHTML = 'View Dependencies';
+            $(browserButton).fadeTo(1000, 1, function(){ 
+                browserButton.style.display = 'block';
+                browserButton.innerHTML = 'View Dependencies';
             });
-            $(tableButton).fadeTo(1000, 1);
+
+
             
             break;
+        case 'head':
+
+           $('#splash').show();
+           //$('#splash').fadeTo(500, 1);
+           headers.transformHead();          
+           browserButton = document.getElementById('browserRightButton');
+
+           $(browserButton).fadeTo(1000, 1, function(){ 
+            $(browserButton).css({ 'bottom':'450px', 'display':'block' });
+           var t1 = new Tween(browserButton.style,'left',Tween.elasticEaseOut,0,100,4,'px');
+               t1.start();
+                browserButton.innerHTML = 'View Dependencies';
+            });
+
+           $('#browserLeftButton').fadeTo(1000, 1, function()
+           { 
+             
+             browserButton = document.getElementById('browserLeftButton');
+           $(browserButton).css({ 'bottom':'450px', 'display':'block' });
+                browserButton.innerHTML = 'Book';
+            });
+
+            break;
         case 'stack':
-            
-            tableButton = document.getElementById('tableViewButton');
+
+            browserButton = document.getElementById('browserRightButton');
             
             headers.transformStack();
             
-            $(tableButton).fadeTo(1000, 0, function(){ 
-                tableButton.style.display = 'block';
-                tableButton.innerHTML = 'View Table';
+            $(browserButton).fadeTo(1000, 1, function(){ 
+            $(browserButton).css({ 'bottom':'10px', 'display':'block' });
+            browserButton.innerHTML = 'View Table';
             });
-            $(tableButton).fadeTo(1000, 1);
+
             
             break;
         default:

@@ -404,11 +404,11 @@ function ViewManager() {
                 },
                 groupIcon = {
                     src : base + 'icons/group/' + levels[j][0] + '/icon_' + group + '.png',
-                    // w : 28 * scale, h : 28 * scale
+                     w : 24 * scale, h : 24 * scale
                 },
                 typeIcon = {
                     src : base + 'icons/type/' + levels[j][0] + '/' + type.toLowerCase() + '_logo.png',
-                   // w : 28 * scale, h : 28 * scale
+                    w : 24 * scale, h : 24 * scale
                 },
                 ring = {
                     src : base + 'rings/' + levels[j][0] + '/' + state + '_diff_' + difficulty + '.png'
@@ -419,7 +419,7 @@ function ViewManager() {
                 },
                 nameText = {
                     text : table[id].name,
-                    font : (10 * scale) + 'px Arial'
+                    font : (12 * scale) + 'px Arial'
                 },
                 layerText = {
                     text : table[id].layer,
@@ -427,7 +427,7 @@ function ViewManager() {
                 },
                 authorText = {
                     text : table[id].authorRealName || table[id].author || '',
-                    font : (3.5 * scale) + 'px Arial'
+                    font : (4 * scale) + 'px Arial'
                 };
             
             if(id === 185)
