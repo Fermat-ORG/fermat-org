@@ -86,14 +86,15 @@ function Camera(position, renderer, renderFunc) {
 
         vec.applyMatrix4( target.matrix );
 
-        new TWEEN.Tween( controls.target )
+        /*new TWEEN.Tween( controls.target )
             .to( { x: target.position.x, y: target.position.y, z: target.position.z }, duration )
             .easing( TWEEN.Easing.Exponential.InOut )
-            .start();
+            .start();*/
 
         new TWEEN.Tween( camera.position )
             .to( { x: vec.x, y: vec.y, z: vec.z }, Math.random() * duration + duration )
-            .easing( TWEEN.Easing.Exponential.InOut )
+            //.easing( TWEEN.Easing.Exponential.InOut )
+            .onUpdate(function(){controls.target.set(camera.position.x, camera.position.y,0); })
             .start();
 
         new TWEEN.Tween( camera.up )
@@ -167,14 +168,15 @@ function Camera(position, renderer, renderFunc) {
         
         duration = duration || 2000;
         
-        new TWEEN.Tween( controls.target )
+        /*new TWEEN.Tween( controls.target )
                 .to( { x: controls.target0.x, y: controls.target0.y, z: controls.target0.z }, Math.random() * duration + duration )
                 .easing( TWEEN.Easing.Exponential.InOut )
-                .start();
+                .start();*/
 
             new TWEEN.Tween( camera.position )
                 .to( { x: controls.position0.x, y: controls.position0.y, z: controls.position0.z }, Math.random() * duration + duration )
-                .easing( TWEEN.Easing.Exponential.InOut )
+                //.easing( TWEEN.Easing.Exponential.InOut )
+                .onUpdate(function(){controls.target.set(camera.position.x, camera.position.y,0); })
                 .start();
 
             new TWEEN.Tween( camera.up )
@@ -279,6 +281,37 @@ var superLayers = {
         return size - 1;
     }
 };
+
+var viewManager = new ViewManager();
+
+function getData() {
+    $.ajax({
+        url: "get_plugins.php",
+        method: "GET"
+    }).success(
+        function(lists) {
+            var l = JSON.parse(lists);
+            viewManager.fillTable(l);
+            $('#splash').fadeTo(2000, 0, function() {
+                $('#splash').remove();
+                init();
+                //setTimeout(animate, 500);
+                animate();
+            });
+        }
+    );
+
+    /*var l = JSON.parse(testData);
+
+        viewManager.fillTable(l);
+
+        $('#splash').fadeTo(2000, 0, function() {
+                $('#splash').remove();
+                init();
+                //setTimeout( animate, 500);
+                animate();
+            });*/
+}
 /**
  * @class Represents the group of all header icons
  * @param {Number} columnWidth         The number of elements that contains a column
@@ -288,10 +321,7 @@ var superLayers = {
  * @param {Array}  superLayerPosition  Array of the position of every superlayer
  */
 function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, superLayerPosition) {
-    
-    // Private constants
-    var INITIAL_POS = new THREE.Vector3(0, 0, 8000);
-    
+        
     // Private members
     var objects = [],
         dependencies = {
@@ -360,12 +390,15 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
      * @param {Number} [duration=2000] Duration of the animation
      */
     this.transformTable = function(duration) {
-        var _duration = duration || 2000,
+        var _duration = duration || 4000,
             i, l;
         
         helper.hide('stackContainer', _duration / 2);
         
-        viewManager.transform(viewManager.targets.table);
+        //This should be moved to be called by viewer.js when we no longer use vis for this
+        setTimeout(function() {    
+            viewManager.transform(viewManager.targets.table); 
+        }, _duration);
         
         for(i = 0, l = objects.length; i < l; i++) {
             
@@ -379,37 +412,14 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
             .start();
         }
         
+        new TWEEN.Tween(this)
+            .to({}, duration * 2)
+            .onUpdate(render)
+            .start();
+        
         self.show(_duration);
     };
-
-    /**
-     * created by Ricardo Delgado
-     * Screen shows the head
-     * @param {Number} duration Milliseconds of fading
-     */
-    this.transformHead = function( duration ) {
-        var _duration = duration || 2000,
-            i, l, container;
-        helper.hide('stackContainer', _duration / 2);
-
-        
-        /*container = document.createElement('div');
-        container.id = 'logoContainer';
-        container.style.position = 'absolute';
-        container.style.opacity = 0;
-        container.style.width = '100%';
-        container.style.height = '100%';
-        container.style.zIndex = 5;
-
-        var geometry    = new THREE.CubeGeometry( 1, 1, 5);
-        var material    = new THREE.MeshBasicMaterial();
-        var cube    = new THREE.Mesh( geometry, material );
-        cube.position.set(5,5,30);
-        scene.add(cube);
-        container.appendChild(renderer.domElement);
-        document.getElementById('container').appendChild(container);*/
- 
-    };
+    
     /**
      * Shows the headers as a fade
      * @param {Number} duration Milliseconds of fading
@@ -528,7 +538,7 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
         // Dummy, send all to center
         for(i = 0; i < objects.length; i++) {
             obj = new THREE.Object3D();
-            obj.position.copy(INITIAL_POS);
+            obj.position.set(0, 0, 8000);
             positions.stack.push(obj);
         }
         
@@ -593,7 +603,9 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
 
                 object = createHeader(src, width, height);
                 
-                object.position.copy(INITIAL_POS);
+                object.position.set(-160000,
+                                    Math.random() * 320000 - 160000,
+                                    0);
 
                 scene.add(object);
                 objects.push(object);
@@ -621,7 +633,9 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
 
                 object = createHeader(src, width, height);
                 
-                object.position.copy(INITIAL_POS);
+                object.position.set(160000,
+                                    Math.random() * 320000 - 160000,
+                                    0);
 
                 scene.add(object);
                 objects.push(object);
@@ -843,9 +857,6 @@ function Helper() {
         return y - lineHeight;
     };
 }
-
-// Make helper a static object
-var helper = new Helper();
 function Loader() {
     // reference to the object
     var that = this;
@@ -1064,14 +1075,13 @@ Timeline.prototype.show = function ( duration ) {
     }
 };
 var table = [],
-    viewManager = new ViewManager(),
+    helper = new Helper(),
     camera,
     scene = new THREE.Scene(),
     renderer,
     objects = [],
     headers = null,
-    actualView = 'stack',
-    stats = null;
+    actualView = 'stack';
 
 //Global constants
 var TILE_DIMENSION = {
@@ -1080,30 +1090,7 @@ var TILE_DIMENSION = {
 },
     TILE_SPACING = 20;
 
-/*$.ajax({
-    url: "get_plugins.php",
-    method: "GET"
-}).success(
-    function(lists) {
-        var l = JSON.parse(lists);
-        viewManager.fillTable(l);
-        $('#splash').fadeTo(2000, 0, function() {
-            $('#splash').remove();
-            init();
-            setTimeout(animate, 500);
-        });
-    }
-);*/
-
-var l = JSON.parse(testData);
-    
-    viewManager.fillTable(l);
-    
-    $('#splash').fadeTo(2000, 0, function() {
-            $('#splash').hide();
-            init();
-            setTimeout( animate, 500);
-        });
+getData();
 
 function init() {
 
@@ -1127,15 +1114,13 @@ function init() {
     camera = new Camera(new THREE.Vector3(0, 0, dimensions.columnWidth * dimensions.groupsQtty * TILE_DIMENSION.width),
         renderer,
         render);
-    // uncomment for testing
-    //create_stats();
+
 
     //
 
     $('#backButton').click(function() {
         changeView(viewManager.targets.table);
     });
-
     $('#legendButton').click(function() {
 
         var legend = document.getElementById('legend');
@@ -1148,20 +1133,10 @@ function init() {
             $(legend).fadeTo(1000, 1);
         }
     });
-
-   $('#browserRightButton').click(function() {
-       if ( actualView === 'stack' )
+    $('#tableViewButton').click(function() {
+        if(actualView === 'stack')
             goToView('table');
-       else 
-            goToView('stack');
-    });
-    
-    $('#browserLeftButton').click(function() {
-       if ( actualView === 'head' ) ;
-       //     goToView('stack');
-       else if ( actualView === 'stack' )
-            goToView('head');
-       else if ( actualView === 'table' )
+        else
             goToView('stack');
     });
     $('#container').click(onClick);
@@ -1169,7 +1144,7 @@ function init() {
     //Disabled Menu
     //initMenu();
 
-    goToView('stack');
+    setTimeout(function() {goToView('table'); }, 500);
     
     /*setTimeout(function() {
         var loader = new Loader();
@@ -1178,68 +1153,43 @@ function init() {
 }
 
 /**
- * 
  * Changes the actual state of the viewer
  * @param {String} name The name of the target state
  */
 function goToView(name) {
     
-    var browserButton;
+    var tableButton;
     
     actualView = name;
     
     switch(name) {
         case 'table':
             
-            browserButton = document.getElementById('browserRightButton');
+            tableButton = document.getElementById('tableViewButton');
             var legendBtn = document.getElementById('legendButton');
             
             headers.transformTable();
             legendBtn.style.display = 'block';
             $(legendBtn).fadeTo(1000, 1);
             
-            $(browserButton).fadeTo(1000, 1, function(){ 
-                browserButton.style.display = 'block';
-                browserButton.innerHTML = 'View Dependencies';
+            $(tableButton).fadeTo(1000, 0, function(){ 
+                tableButton.style.display = 'block';
+                tableButton.innerHTML = 'View Dependencies';
             });
-
-
+            $(tableButton).fadeTo(1000, 1);
             
             break;
-        case 'head':
-
-           $('#splash').show();
-           //$('#splash').fadeTo(500, 1);
-           headers.transformHead();          
-           browserButton = document.getElementById('browserRightButton');
-
-           $(browserButton).fadeTo(1000, 1, function(){ 
-            $(browserButton).css({ 'bottom':'450px', 'display':'block' });
-           var t1 = new Tween(browserButton.style,'left',Tween.elasticEaseOut,0,100,4,'px');
-               t1.start();
-                browserButton.innerHTML = 'View Dependencies';
-            });
-
-           $('#browserLeftButton').fadeTo(1000, 1, function()
-           { 
-             
-             browserButton = document.getElementById('browserLeftButton');
-           $(browserButton).css({ 'bottom':'450px', 'display':'block' });
-                browserButton.innerHTML = 'Book';
-            });
-
-            break;
         case 'stack':
-
-            browserButton = document.getElementById('browserRightButton');
+            
+            tableButton = document.getElementById('tableViewButton');
             
             headers.transformStack();
             
-            $(browserButton).fadeTo(1000, 1, function(){ 
-            $(browserButton).css({ 'bottom':'10px', 'display':'block' });
-            browserButton.innerHTML = 'View Table';
+            $(tableButton).fadeTo(1000, 0, function(){ 
+                tableButton.style.display = 'block';
+                tableButton.innerHTML = 'View Table';
             });
-
+            $(tableButton).fadeTo(1000, 1);
             
             break;
         default:
@@ -1483,25 +1433,7 @@ function animate() {
     TWEEN.update();
 
     camera.update();
-
-    if ( stats ) stats.update();
 }
-     /**
-     * Created by Ricardo Delgado
-     * create stats for performance testing 
-     */
-   function create_stats(){ 
-
-    stats = new Stats();
-    stats.setMode(0);
-    stats.domElement.style.position = 'absolute';
-    stats.domElement.style.left    = '0px';
-    stats.domElement.style.top   = '0px';
-    stats.domElement.style.display  = 'block';
-    var contai = document.getElementById("container");
-    contai.appendChild(stats.domElement);
-
-    }
 
 function render() {
 
@@ -1846,8 +1778,6 @@ function ViewManager() {
     };
     
     /**
-     * Created by Miguel Celedon
-     * Modified by Ricardo Delgado 
      * Creates a Tile
      * @param   {Number}     i ID of the tile (index in table)
      * @returns {DOMElement} The drawable element that represents the tile
@@ -1914,11 +1844,11 @@ function ViewManager() {
                 },
                 groupIcon = {
                     src : base + 'icons/group/' + levels[j][0] + '/icon_' + group + '.png',
-                     w : 24 * scale, h : 24 * scale
+                    w : 28 * scale, h : 28 * scale
                 },
                 typeIcon = {
                     src : base + 'icons/type/' + levels[j][0] + '/' + type.toLowerCase() + '_logo.png',
-                    w : 24 * scale, h : 24 * scale
+                    w : 28 * scale, h : 28 * scale
                 },
                 ring = {
                     src : base + 'rings/' + levels[j][0] + '/' + state + '_diff_' + difficulty + '.png'
@@ -1929,7 +1859,7 @@ function ViewManager() {
                 },
                 nameText = {
                     text : table[id].name,
-                    font : (12 * scale) + 'px Arial'
+                    font : (10 * scale) + 'px Arial'
                 },
                 layerText = {
                     text : table[id].layer,
@@ -1937,7 +1867,7 @@ function ViewManager() {
                 },
                 authorText = {
                     text : table[id].authorRealName || table[id].author || '',
-                    font : (4 * scale) + 'px Arial'
+                    font : (3.5 * scale) + 'px Arial'
                 };
             
             if(id === 185)
@@ -2252,9 +2182,12 @@ function ViewManager() {
 
             var object = this.createElement(i);
             
-            object.position.x = 0;
-            object.position.y = 0;
+            object.position.x = Math.random() * 80000 - 40000;
+            object.position.y = Math.random() * 80000 - 40000;
             object.position.z = 80000;
+            object.rotation.x = Math.random() * 180;
+            object.rotation.y = Math.random() * 180;
+            object.rotation.z = Math.random() * 180;
             scene.add(object);
 
             objects.push(object);
