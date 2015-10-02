@@ -1,3 +1,194 @@
+var testFlow = 
+{
+    flowName : 'Nombre que describe al flujo',
+    flowData : [
+        {
+            title : 'Paso uno',
+            desc : 'Paso inicial del flujo',
+            element : 'bch/crypto vault/bitcoin currency',  // Grupo/Layer/Nombre
+            next : [1]                                      // Una lista de indices del mismo array
+        },
+        {
+            title : 'Paso dos',
+            desc : 'Este le sigue al paso uno',
+            element : 'ccm/reference wallet/discount wallet',
+            next : [2]
+        },
+        {
+            title : 'Paso tres',
+            desc : 'Este se bifurca en dos pasos',
+            element : 'bnp/reference wallet/bank notes',
+            next : [3, 4]
+        },
+        {
+            title : 'Paso tres punto a',
+            desc : 'Este es uno de los que sigue del 3',
+            element : 'dap/actor/asset issuer',
+            next : []
+        },
+        {
+            title : 'Paso tres punto b',
+            desc : 'Este le sigue al del 3 tambien',
+            element : 'cbp/reference wallet/crypto broker',
+            next : []
+        }
+    ]
+};
+
+function ActionFlow(flow) {
+    
+    this.flow = flow || testFlow || [];
+    var self = this;
+    var objects = [];
+    
+    var i, l;
+    
+    for(i = 0, l = self.flow.flowData.length; i < l; i++) {
+        self.flow.flowData[i].element = helper.searchElement(self.flow.flowData[i].element);
+    }
+    
+    this.draw = function(initialX, initialY) {
+        
+        var title = createTextBox(self.flow.flowName, {
+            height : window.TILE_DIMENSION.height, size : 36, textAlign : 'center', fontWeight : 'bold'
+        });
+        
+        title.position.set(initialX, initialY + window.TILE_DIMENSION.height * 2, 0);
+        objects.push(title);
+        scene.add(title);
+        
+        var columnWidth = window.TILE_DIMENSION.width * 3,
+            rowHeight = window.TILE_DIMENSION.width * 3;
+        
+        for(i = 0, l = self.flow.flowData.length; i < l; i++)
+            drawTree(self.flow.flowData[i], initialX, initialY);
+        
+        
+        
+        function drawTree(root, x, y) {
+            
+            if(typeof root.drawn === 'undefined') {
+                drawStep(root, x, y);
+            
+                var childCount = root.next.length,
+                    startX = x - 0.5 * (childCount - 1) * columnWidth;
+
+                if(childCount !== 0) {
+
+                    var lineGeo = new THREE.Geometry();
+                    var lineMat = new THREE.LineBasicMaterial({color : 0x000000});
+
+                    var rootPoint = new THREE.Vector3(x, y - rowHeight / 2);
+
+                    lineGeo.vertices.push(
+                        new THREE.Vector3(x, y - rowHeight * 0.25, 0),
+                        rootPoint);
+
+                    var rootLine = new THREE.Line(lineGeo, lineMat);
+                    objects.push(rootLine);
+                    window.scene.add(rootLine);
+
+                    var nextX, nextY, childLine;
+
+                    for(var child = 0; child < childCount; child++) {
+
+                        nextX = startX + child * columnWidth;
+                        nextY = y - rowHeight;
+
+                        lineGeo = new THREE.Geometry();
+                        lineGeo.vertices.push(
+                            rootPoint,
+                            new THREE.Vector3(nextX, rootPoint.y, 0),
+                            new THREE.Vector3(nextX, nextY + rowHeight * 0.05, 0)
+                        );
+
+                        childLine = new THREE.Line(lineGeo, lineMat);
+                        objects.push(childLine);
+                        window.scene.add(childLine);
+
+                        drawTree(self.flow.flowData[root.next[child]], nextX, nextY);
+                    }
+                }
+            }
+            
+            
+            function drawStep(node, x, y) {
+            
+                var tile;
+                
+                var titleHeight = window.TILE_DIMENSION.height / 2;
+                
+                if(node.element !== -1) {
+                    tile = window.objects[node.element];
+                    tile.position.set(x - window.TILE_DIMENSION.width / 2, y - titleHeight * 3 / 2, 0);
+                }
+
+                var title = createTextBox(node.title, {size : 24, fontWeight : 'bold', height : titleHeight, textAlign : 'center'});
+                title.position.set(x, y, 0);
+
+                var description = createTextBox(node.desc, {width : window.TILE_DIMENSION.width});
+                description.position.set(x + window.TILE_DIMENSION.width / 2, y - titleHeight * 3 / 2, 0);
+
+                node.drawn = true;
+                objects.push(title);
+                objects.push(description);
+                window.scene.add(title);
+                window.scene.add(description);
+            }
+        }
+    };
+    
+    //Private methods
+    function createTextBox(text, params) {
+        
+        if(typeof params === 'undefined') params = {};
+        
+        params = $.extend({
+            fontWeight : 'normal',
+            size : 12,
+            fontFamily : 'Arial',
+            width : window.TILE_DIMENSION.width * 2,
+            height : window.TILE_DIMENSION.height,
+            background : '#CCCCCC',
+            textColor : '#000000',
+            textAlign : 'left'
+        }, params);
+        
+        
+        
+        var width = params.width;
+        var height = params.height;
+        var canvas = document.createElement('canvas');
+        canvas.width = width;
+        canvas.height = height;
+        
+        var texture = new THREE.Texture(canvas);
+        texture.minFilter = THREE.NearestFilter;
+        
+        var ctx = canvas.getContext('2d');
+        ctx.font = params.fontWeight + ' ' + params.size + 'px ' + params.fontFamily;
+        ctx.textAlign = params.textAlign;
+        
+        
+        ctx.fillStyle = params.background;
+        ctx.fillRect(0, 0, width, height);
+        ctx.fillStyle = params.textColor;
+        
+        var start = (params.textAlign !== 'center') ? 0 : width / 2;
+        
+        //var height = Math.abs(helper.drawText(text, 0, font, ctx, width, font)) * 2;
+        helper.drawText(text, start, params.size, ctx, width, params.size);
+        
+        var mesh = new THREE.Mesh(
+            new THREE.PlaneGeometry(width, height),
+            new THREE.MeshBasicMaterial({map : texture, vertexColors : THREE.FaceColors, side : THREE.FrontSide, color : 0xffffff}));
+        
+        mesh.material.needsUpdate = true;
+        texture.needsUpdate = true;
+        
+        return mesh;
+    }
+}
 /**
  *
  * @class Camera
@@ -86,15 +277,14 @@ function Camera(position, renderer, renderFunc) {
 
         vec.applyMatrix4( target.matrix );
 
-        /*new TWEEN.Tween( controls.target )
+        new TWEEN.Tween( controls.target )
             .to( { x: target.position.x, y: target.position.y, z: target.position.z }, duration )
             .easing( TWEEN.Easing.Exponential.InOut )
-            .start();*/
+            .start();
 
         new TWEEN.Tween( camera.position )
             .to( { x: vec.x, y: vec.y, z: vec.z }, Math.random() * duration + duration )
-            //.easing( TWEEN.Easing.Exponential.InOut )
-            .onUpdate(function(){controls.target.set(camera.position.x, camera.position.y,0); })
+            .easing( TWEEN.Easing.Exponential.InOut )
             .start();
 
         new TWEEN.Tween( camera.up )
@@ -168,15 +358,14 @@ function Camera(position, renderer, renderFunc) {
         
         duration = duration || 2000;
         
-        /*new TWEEN.Tween( controls.target )
+        new TWEEN.Tween( controls.target )
                 .to( { x: controls.target0.x, y: controls.target0.y, z: controls.target0.z }, Math.random() * duration + duration )
                 .easing( TWEEN.Easing.Exponential.InOut )
-                .start();*/
+                .start();
 
             new TWEEN.Tween( camera.position )
                 .to( { x: controls.position0.x, y: controls.position0.y, z: controls.position0.z }, Math.random() * duration + duration )
-                //.easing( TWEEN.Easing.Exponential.InOut )
-                .onUpdate(function(){controls.target.set(camera.position.x, camera.position.y,0); })
+                .easing( TWEEN.Easing.Exponential.InOut )
                 .start();
 
             new TWEEN.Tween( camera.up )
@@ -233,6 +422,17 @@ function Camera(position, renderer, renderFunc) {
         return raycaster.intersectObjects(elements);
     };
     
+    this.move = function(x, y, z, duration) {
+        
+        var _duration = duration || 2000;
+        
+        new TWEEN.Tween(camera.position)
+        .to({x : x, y : y, z : z}, _duration)
+        .easing(TWEEN.Easing.Exponential.InOut)
+        .start();
+        
+    };
+    
     // Events
     window.addEventListener( 'resize', this.onWindowResize, false );
     window.addEventListener( 'keydown', this.onKeyDown, false );
@@ -281,37 +481,6 @@ var superLayers = {
         return size - 1;
     }
 };
-
-var viewManager = new ViewManager();
-
-function getData() {
-    $.ajax({
-        url: "get_plugins.php",
-        method: "GET"
-    }).success(
-        function(lists) {
-            var l = JSON.parse(lists);
-            viewManager.fillTable(l);
-            $('#splash').fadeTo(2000, 0, function() {
-                $('#splash').remove();
-                init();
-                //setTimeout(animate, 500);
-                animate();
-            });
-        }
-    );
-
-    /*var l = JSON.parse(testData);
-
-        viewManager.fillTable(l);
-
-        $('#splash').fadeTo(2000, 0, function() {
-                $('#splash').remove();
-                init();
-                //setTimeout( animate, 500);
-                animate();
-            });*/
-}
 /**
  * @class Represents the group of all header icons
  * @param {Number} columnWidth         The number of elements that contains a column
@@ -321,7 +490,10 @@ function getData() {
  * @param {Array}  superLayerPosition  Array of the position of every superlayer
  */
 function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, superLayerPosition) {
-        
+    
+    // Private constants
+    var INITIAL_POS = new THREE.Vector3(0, 0, 8000);
+    
     // Private members
     var objects = [],
         dependencies = {
@@ -390,15 +562,12 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
      * @param {Number} [duration=2000] Duration of the animation
      */
     this.transformTable = function(duration) {
-        var _duration = duration || 4000,
+        var _duration = duration || 2000,
             i, l;
         
         helper.hide('stackContainer', _duration / 2);
         
-        //This should be moved to be called by viewer.js when we no longer use vis for this
-        setTimeout(function() {    
-            viewManager.transform(viewManager.targets.table); 
-        }, _duration);
+        viewManager.transform(viewManager.targets.table);
         
         for(i = 0, l = objects.length; i < l; i++) {
             
@@ -411,11 +580,6 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
             .easing(TWEEN.Easing.Exponential.InOut)
             .start();
         }
-        
-        new TWEEN.Tween(this)
-            .to({}, duration * 2)
-            .onUpdate(render)
-            .start();
         
         self.show(_duration);
     };
@@ -538,7 +702,7 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
         // Dummy, send all to center
         for(i = 0; i < objects.length; i++) {
             obj = new THREE.Object3D();
-            obj.position.set(0, 0, 8000);
+            obj.position.copy(INITIAL_POS);
             positions.stack.push(obj);
         }
         
@@ -603,9 +767,7 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
 
                 object = createHeader(src, width, height);
                 
-                object.position.set(-160000,
-                                    Math.random() * 320000 - 160000,
-                                    0);
+                object.position.copy(INITIAL_POS);
 
                 scene.add(object);
                 objects.push(object);
@@ -633,9 +795,7 @@ function Headers(columnWidth, superLayerMaxHeight, groupsQtty, layersQtty, super
 
                 object = createHeader(src, width, height);
                 
-                object.position.set(160000,
-                                    Math.random() * 320000 - 160000,
-                                    0);
+                object.position.copy(INITIAL_POS);
 
                 scene.add(object);
                 objects.push(object);
@@ -846,7 +1006,7 @@ function Helper() {
           if (testWidth > maxWidth && n > 0) {
             context.fillText(line, x, y);
             line = words[n] + ' ';
-            y -= lineHeight;
+            y += lineHeight;
           }
           else {
             line = testLine;
@@ -854,9 +1014,35 @@ function Helper() {
         }
         context.fillText(line, x, y);
 
-        return y - lineHeight;
+        return y + lineHeight;
+    };
+    
+    this.searchElement = function(elementFullName) {
+        
+        if(typeof elementFullName !== 'string') return -1;
+        
+        var group,
+            components = elementFullName.split('/');
+        
+        if(components.length === 3) {
+        
+            for(var i = 0, l = table.length; i < l; i++) {
+
+                group = table[i].group || window.layers[table[i].layer].super_layer;
+
+                if(group.toLowerCase() === components[0].toLowerCase() &&
+                   table[i].layer.toLowerCase() === components[1].toLowerCase() &&
+                   table[i].name.toLowerCase() === components[2].toLowerCase())
+                    return i;
+            }
+        }
+        
+        return -1;
     };
 }
+
+// Make helper a static object
+var helper = new Helper();
 function Loader() {
     // reference to the object
     var that = this;
@@ -1075,7 +1261,7 @@ Timeline.prototype.show = function ( duration ) {
     }
 };
 var table = [],
-    helper = new Helper(),
+    viewManager = new ViewManager(),
     camera,
     scene = new THREE.Scene(),
     renderer,
@@ -1090,7 +1276,30 @@ var TILE_DIMENSION = {
 },
     TILE_SPACING = 20;
 
-getData();
+/*$.ajax({
+    url: "get_plugins.php",
+    method: "GET"
+}).success(
+    function(lists) {
+        var l = JSON.parse(lists);
+        viewManager.fillTable(l);
+        $('#splash').fadeTo(2000, 0, function() {
+            $('#splash').remove();
+            init();
+            setTimeout(animate, 500);
+        });
+    }
+);*/
+
+var l = JSON.parse(testData);
+    
+    viewManager.fillTable(l);
+    
+    $('#splash').fadeTo(2000, 0, function() {
+            $('#splash').remove();
+            init();
+            setTimeout( animate, 500);
+        });
 
 function init() {
 
@@ -1144,7 +1353,7 @@ function init() {
     //Disabled Menu
     //initMenu();
 
-    setTimeout(function() {goToView('table'); }, 500);
+    goToView('stack');
     
     /*setTimeout(function() {
         var loader = new Loader();
@@ -1424,6 +1633,17 @@ function onClick(e) {
             onElementClick(clicked[0].object.userData.id);
         }
     }
+}
+
+function showFlow(id) {
+    
+    var tile = objects[id];
+    
+    camera.enable();
+    camera.move(tile.position.x, tile.position.y, tile.position.z + window.TILE_DIMENSION.width * 2);
+    
+    var flow = new ActionFlow();
+    flow.draw(tile.position.x, tile.position.y);
 }
 
 function animate() {
@@ -1870,9 +2090,6 @@ function ViewManager() {
                     font : (3.5 * scale) + 'px Arial'
                 };
             
-            if(id === 185)
-                console.log("now");
-            
             switch(state) {
                 case "concept":
                     pic.x = 80 * scale;
@@ -2182,12 +2399,9 @@ function ViewManager() {
 
             var object = this.createElement(i);
             
-            object.position.x = Math.random() * 80000 - 40000;
-            object.position.y = Math.random() * 80000 - 40000;
+            object.position.x = 0;
+            object.position.y = 0;
             object.position.z = 80000;
-            object.rotation.x = Math.random() * 180;
-            object.rotation.y = Math.random() * 180;
-            object.rotation.z = Math.random() * 180;
             scene.add(object);
 
             objects.push(object);
