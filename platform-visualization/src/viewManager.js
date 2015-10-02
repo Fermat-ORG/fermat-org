@@ -430,9 +430,6 @@ function ViewManager() {
                     font : (4 * scale) + 'px Arial'
                 };
             
-            if(id === 185)
-                console.log("now");
-            
             switch(state) {
                 case "concept":
                     pic.x = 80 * scale;
