@@ -5,7 +5,7 @@ var table = [],
     renderer,
     objects = [],
     headers = null,
-    actualView = 'start',
+    actualView = 'stack',
     stats = null;
 
 //Global constants
@@ -40,7 +40,7 @@ function init() {
         renderer,
         render);
     // uncomment for testing
-    create_stats();
+    //create_stats();
 
     //
 
@@ -62,28 +62,26 @@ function init() {
     });
 
    $('#browserRightButton').click(function() {
-       if ( actualView === 'start' )
-            goToView('stack','start');
-       else if ( actualView === 'stack' )
-            goToView('table','stack');
+       if ( actualView === 'stack' )
+            goToView('table');
        else 
-            goToView('stack','table');
+            goToView('stack');
     });
     
     $('#browserLeftButton').click(function() {
-       if ( actualView === 'start' ) ;
+       if ( actualView === 'head' ) ;
        //     goToView('stack');
        else if ( actualView === 'stack' )
-            goToView('start','stack');
+            goToView('head');
        else if ( actualView === 'table' )
-            goToView('stack','table');
+            goToView('stack');
     });
     $('#container').click(onClick);
 
     //Disabled Menu
     //initMenu();
 
-setTimeout(function() {goToView('start', null); }, 500);
+    setTimeout(function() {goToView('table'); }, 500);
     
     /*setTimeout(function() {
         var loader = new Loader();
@@ -92,148 +90,75 @@ setTimeout(function() {goToView('start', null); }, 500);
 }
 
 /**
- * created by Miguel Celedon
- * modified by Ricardo Delgado
+ * 
  * Changes the actual state of the viewer
  * @param {String} name The name of the target state
  */
-function goToView ( current, previous ) {
-        
-    actualView = current;
-
-    var anima = null;
-
-    switch(current) {
+function goToView(name) {
+    
+    var browserButton;
+    
+    actualView = name;
+    
+    switch(name) {
         case 'table':
             
+            browserButton = document.getElementById('browserRightButton');
             var legendBtn = document.getElementById('legendButton');
-  
-            legendBtn.style.display = 'block';
-
-            $(legendBtn).fadeTo(1000, 1);
-
-            headers.transformTable();
             
+            headers.transformTable();
+            legendBtn.style.display = 'block';
+            $(legendBtn).fadeTo(1000, 1);
+            
+            $(browserButton).fadeTo(1000, 1, function(){ 
+                browserButton.style.display = 'block';
+                browserButton.innerHTML = 'View Dependencies';
+            });
 
-            modifyButtonRight( 'View Table', 'block', 10, -50 );
-           
-            modifyButtonLeft( 'View Dependencies', 'block', 10, null );
 
             
             break;
-        case 'start':
+        case 'head':
 
            $('#splash').show();
+           //$('#splash').fadeTo(500, 1);
+           headers.transformHead();          
+           browserButton = document.getElementById('browserRightButton');
 
-           headers.transformHead();    
+           $(browserButton).fadeTo(1000, 1, function(){ 
+            $(browserButton).css({ 'bottom':'450px', 'display':'block' });
+           var t1 = new Tween(browserButton.style,'left',Tween.elasticEaseOut,0,100,4,'px');
+               t1.start();
+                browserButton.innerHTML = 'View Dependencies';
+            });
 
-          if ( previous === 'stack' ) anima = null; 
-
-          else anima = 450;
-
-           modifyButtonRight( 'View Dependencies', 'block', 10, anima );
-
-           modifyButtonLeft( 'Book', 'block', 10, anima );
+           $('#browserLeftButton').fadeTo(1000, 1, function()
+           { 
+             
+             browserButton = document.getElementById('browserLeftButton');
+           $(browserButton).css({ 'bottom':'450px', 'display':'block' });
+                browserButton.innerHTML = 'Book';
+            });
 
             break;
         case 'stack':
 
-            $('#splash').hide();
+            browserButton = document.getElementById('browserRightButton');
             
             headers.transformStack();
+            
+            $(browserButton).fadeTo(1000, 1, function(){ 
+            $(browserButton).css({ 'bottom':'10px', 'display':'block' });
+            browserButton.innerHTML = 'View Table';
+            });
 
-            if ( previous === 'table' ) anima = -50; 
-
-            else anima = 450; 
-
-            modifyButtonRight( 'View Table', 'block', anima, 10);
-           
-            modifyButtonLeft( 'start', 'block', anima, 10);
             
             break;
-
         default:
-            actualView = 'start';
+            actualView = 'stack';
             break;
     }
 }
-
-/**
- * created by Ricardo Delgado
- * editing text , animation and control button state
- * @param {String} label, The button name.
- * @param {String} view, The view button.
- * @param {int} start, button to start the animation.
- * @param {int} end, button to end the animation.
- */
-function modifyButtonRight ( label, view, start, end) {
-	
-var browserButton = document.getElementById('browserRightButton');
-
-$(browserButton).fadeTo(1000, 1, function(){ 
-
-	browserButton.style.display=view;
-    browserButton.innerHTML = label;
-
-if ( end ) update_animation_button ( start, end, browserButton );
-
-
-		});
-
-}
-/**
- * Created by Ricardo Delgado
- * Editing text , animation and control button state
- * @param {String} label, The button name.
- * @param {String} view, The view button.
- * @param {int} start, button to start the animation.
- * @param {int} end, button to end the animation.
- */
-function modifyButtonLeft ( label, view, start, end ) {
-	
-var browserButton = document.getElementById('browserLeftButton');
-
-$(browserButton).fadeTo(1000, 1, function(){ 
-
-    browserButton.style.display=view;
-    browserButton.innerHTML = label;
-
-if ( end ) update_animation_button ( start, end, browserButton );
-
-            });
-
-}
-
-/**
- * Created by Ricardo Delgado
- * Animation creation button
- * @param {int} start, button to start the animation.
- * @param {int} end, button to end the animation.
- * @param {id} button, Pin ID.
- */
-function update_animation_button ( start, end, button ) {
-
-var position = {x: start, rotation: 0};
-
-var tween = new TWEEN.Tween(position)
-					.to({x: end, rotation: 360}, 5000)
-					.delay(1000)
-					.easing(TWEEN.Easing.Elastic.InOut)
-					.onUpdate(update);
-
-				tween.start();
-
-function update() {
-
-	button.style.bottom = position.x + 'px';
-	button.style.webkitTransform = 'rotate(' + Math.floor(position.rotation) + 'deg)';
-	button.style.MozTransform = 'rotate(' + Math.floor(position.rotation) + 'deg)';
-
-			}
-
-}
-
-
 
 function initMenu() {
 
@@ -461,17 +386,6 @@ function onClick(e) {
             onElementClick(clicked[0].object.userData.id);
         }
     }
-}
-
-function showFlow(id) {
-    
-    var tile = objects[id];
-    
-    camera.enable();
-    camera.move(tile.position.x, tile.position.y, tile.position.z + window.TILE_DIMENSION.width * 2);
-    
-    var flow = new ActionFlow();
-    flow.draw(tile.position.x, tile.position.y);
 }
 
 function animate() {
