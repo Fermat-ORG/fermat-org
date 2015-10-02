@@ -94,7 +94,7 @@ function ViewManager() {
             if (isSuperLayer[i]) {
 
                 if (!inSuperLayer) {
-                    actualHeight++;
+                    actualHeight+= 3;
 
                     if (superLayerPosition[actualSuperLayer] === undefined) {
                         superLayerPosition[actualSuperLayer] = actualHeight;
@@ -275,7 +275,7 @@ function ViewManager() {
             superLayers[list.superLayers[i].code].index = list.superLayers[i].index;
 
             if(list.superLayers[i].dependsOn && list.superLayers[i].dependsOn.length !== 0) {
-                dependency = list.superLayers[i].dependsOn.replace(' ', '').split(',');
+                dependency = list.superLayers[i].dependsOn.split(' ').join('').split(',');
                 superLayers[list.superLayers[i].code].dependsOn = dependency;
             }
         }
@@ -287,10 +287,11 @@ function ViewManager() {
         }
 
         for (i = 0, l = list.groups.length; i < l; i++) {
-            groups[list.groups[i].code] = list.groups[i].index;
+            groups[list.groups[i].code] = {};
+            groups[list.groups[i].code].index = list.groups[i].index;
 
             if(list.groups[i].dependsOn && list.groups[i].dependsOn.length !== 0) {
-                dependency = list.groups[i].dependsOn.replace(' ', '').split(',');
+                dependency = list.groups[i].dependsOn.split(' ').join('').split(',');
                 groups[list.groups[i].code].dependsOn = dependency;
             }
         }
@@ -307,7 +308,7 @@ function ViewManager() {
             var layerID = layers[_layer].index;
             layerID = (layerID === undefined) ? layers.size() : layerID;
 
-            var groupID = groups[_group];
+            var groupID = (_group !== undefined) ? groups[_group].index : undefined;
             groupID = (groupID === undefined) ? groups.size() : groupID;
 
             var element = {
@@ -332,99 +333,340 @@ function ViewManager() {
         
         groupsQtty = groups.size();
         layersQtty = layers.size();
-
-        var loader = new Loader();
-        loader.findThemAll();
     };
     
     /**
+     * Created by Miguel Celedon
+     * Modified by Ricardo Delgado 
      * Creates a Tile
      * @param   {Number}     i ID of the tile (index in table)
      * @returns {DOMElement} The drawable element that represents the tile
      */
-    this.createElement = function(i) {
+    this.createElement = function(id) {
 
-        var element = document.createElement('div');
-        element.className = 'element';
-        element.id = i;
-
-        element.addEventListener('click', onElementClick, false);
-
-        if (table[i].picture !== undefined) {
-            var picture = document.createElement('img');
-            picture.id = 'img-' + i;
-            picture.className = 'picture';
-            picture.src = table[i].picture;
-            element.appendChild(picture);
+        var mesh,
+            element = new THREE.LOD(),
+            levels = [
+            ['high', 0],
+            ['medium', 1000],
+            ['small', 1800],
+            ['mini', 2300]],
+            texture,
+            tileWidth = window.TILE_DIMENSION.width - window.TILE_SPACING,
+            tileHeight = window.TILE_DIMENSION.height - window.TILE_SPACING,
+            scale = 2;
+        
+        for(var j = 0, l = levels.length; j < l; j++) {
+            
+            texture = createTexture(id, tileWidth, tileHeight, scale);
+            
+            mesh = new THREE.Mesh(
+                new THREE.PlaneGeometry(tileWidth, tileHeight),
+                new THREE.MeshBasicMaterial({vertexColors : THREE.FaceColors, side : THREE.FrontSide, color : 0xffffff})
+            );
+            mesh.userData = {id : id};
+            mesh.material.map = texture;
+            mesh.material.needsUpdate = true;
+            element.addLevel(mesh, levels[j][1]);
         }
-
-        var difficulty = document.createElement('div');
-        difficulty.className = 'difficulty';
-        difficulty.textContent = helper.printDifficulty(Math.floor(table[i].difficulty / 2));
-        element.appendChild(difficulty);
-
-        var number = document.createElement('div');
-        number.className = 'number';
-        number.textContent = (table[i].group !== undefined) ? table[i].group : layers[table[i].layer].super_layer;
-        element.appendChild(number);
-
-        var symbol = document.createElement('div');
-        symbol.className = 'symbol';
-        symbol.textContent = table[i].code;
-        element.appendChild(symbol);
-
-        var details = document.createElement('div');
-        details.className = 'details';
-
-        var pluginName = document.createElement('p');
-        pluginName.innerHTML = table[i].name;
-        pluginName.className = 'name';
-
-        var layerName = document.createElement('p');
-        layerName.innerHTML = table[i].layer;
-
-        details.appendChild(pluginName);
-        details.appendChild(layerName);
-        element.appendChild(details);
-
-        switch (table[i].code_level) {
-
-            case "concept":
-                element.style.boxShadow = '0px 0px 12px rgba(150,150,150,0.5)';
-                element.style.backgroundColor = 'rgba(170,170,170,' + (Math.random() * 0.25 + 0.45) + ')';
-
-                number.style.color = 'rgba(127,127,127,1)';
-                layerName.style.color = 'rgba(127,127,127,1)';
-
-                break;
-            case "development":
-                element.style.boxShadow = '0px 0px 12px rgba(244,133,107,0.5)';
-                element.style.backgroundColor = 'rgba(234,123,97,' + (Math.random() * 0.25 + 0.45) + ')';
-
-                number.style.color = 'rgba(234,123,97,1)';
-                layerName.style.color = 'rgba(234,123,97,1)';
-
-
-                break;
-            case "qa":
-                element.style.boxShadow = '0px 0px 12px rgba(244,244,107,0.5)';
-                element.style.backgroundColor = 'rgba(194,194,57,' + (Math.random() * 0.25 + 0.45) + ')';
-
-                number.style.color = 'rgba(194,194,57,1)';
-                layerName.style.color = 'rgba(194,194,57,1)';
-
-
-                break;
-            case "production":
-                element.style.boxShadow = '0px 0px 12px rgba(80,188,107,0.5)';
-                element.style.backgroundColor = 'rgba(70,178,97,' + (Math.random() * 0.25 + 0.45) + ')';
-
-                number.style.color = 'rgba(70,178,97,1)';
-                layerName.style.color = 'rgba(70,178,97,1)';
-
-                break;
+        
+        function createTexture(id, tileWidth, tileHeight, scale) {
+            
+            var state = table[id].code_level,
+                difficulty = Math.ceil(table[id].difficulty / 2),
+                group = table[id].group || window.layers[table[id].layer].super_layer,
+                type = table[id].type,
+                picture = table[id].picture,
+                base = 'images/tiles/';
+            
+            var canvas = document.createElement('canvas');
+            canvas.width = tileWidth * scale;
+            canvas.height = tileHeight * scale;
+            
+            var middle = canvas.width / 2;
+            var ctx = canvas.getContext('2d');
+            ctx.fillStyle = "#FFFFFF";
+            ctx.fillRect(0, 0, tileWidth * scale, tileHeight * scale);
+            ctx.textAlign = 'center';
+            
+            var texture = new THREE.Texture(canvas);
+            texture.minFilter = THREE.NearestFilter;
+            texture.magFilter = THREE.LinearFilter;
+            
+            var pic = {
+                    src : picture || base + 'buster.png',
+                    alpha : 0.8
+                },
+                portrait = {
+                    src : base + 'portrait/' + levels[j][0] + '/' + state + '.png',
+                    x : 0, y : 0,
+                    w : tileWidth * scale, h : tileHeight * scale
+                },
+                groupIcon = {
+                    src : base + 'icons/group/' + levels[j][0] + '/icon_' + group + '.png',
+                     w : 24 * scale, h : 24 * scale
+                },
+                typeIcon = {
+                    src : base + 'icons/type/' + levels[j][0] + '/' + type.toLowerCase() + '_logo.png',
+                    w : 24 * scale, h : 24 * scale
+                },
+                ring = {
+                    src : base + 'rings/' + levels[j][0] + '/' + state + '_diff_' + difficulty + '.png'
+                },
+                codeText = {
+                    text : table[id].code,
+                    font : (18 * scale) + "px Arial"
+                },
+                nameText = {
+                    text : table[id].name,
+                    font : (12 * scale) + 'px Arial'
+                },
+                layerText = {
+                    text : table[id].layer,
+                    font : (6 * scale) + 'px Arial'
+                },
+                authorText = {
+                    text : table[id].authorRealName || table[id].author || '',
+                    font : (4 * scale) + 'px Arial'
+                };
+            
+            if(id === 185)
+                console.log("now");
+            
+            switch(state) {
+                case "concept":
+                    pic.x = 80 * scale;
+                    pic.y = 36 * scale;
+                    pic.w = 53 * scale;
+                    pic.h = 53 * scale;
+                    
+                    groupIcon.x = 25 * scale;
+                    groupIcon.y = 49 * scale;
+                    
+                    typeIcon.x = 160 * scale;
+                    typeIcon.y = 49 * scale;
+                    
+                    ring.x = 72 * scale;
+                    ring.y = 93 * scale;
+                    ring.w = 68 * scale;
+                    ring.h = 9 * scale;
+                    
+                    codeText.x = middle;
+                    codeText.y = 21 * scale;
+                    
+                    nameText.x = middle;
+                    nameText.y = 33 * scale;
+                    nameText.font = (9 * scale) + 'px Arial';
+                    nameText.color = "#000000";
+                    
+                    layerText.x = middle;
+                    layerText.y = 114 * scale;
+                    
+                    authorText.x = middle;
+                    authorText.y = 80 * scale;
+                    
+                    break;
+                case "development":
+                    pic.x = 82 * scale;
+                    pic.y = 47 * scale;
+                    pic.w = 53 * scale;
+                    pic.h = 53 * scale;
+                    
+                    groupIcon.x = 35 * scale;
+                    groupIcon.y = 76 * scale;
+                    
+                    typeIcon.x = 154 * scale;
+                    typeIcon.y = 76 * scale;
+                    
+                    ring.x = 66 * scale;
+                    ring.y = 31 * scale;
+                    ring.w = 82 * scale;
+                    ring.h = 81 * scale;
+                    
+                    codeText.x = middle;
+                    codeText.y = 20 * scale;
+                    
+                    nameText.x = middle;
+                    nameText.y = 28 * scale;
+                    nameText.font = (6 * scale) + 'px Arial';
+                    
+                    layerText.x = middle;
+                    layerText.y = 113 * scale;
+                    layerText.color = "#F26662";
+                    
+                    authorText.x = middle;
+                    authorText.y = 88 * scale;
+                    
+                    break;
+                case "qa":
+                    pic.x = 80 * scale;
+                    pic.y = 35 * scale;
+                    pic.w = 53 * scale;
+                    pic.h = 53 * scale;
+                    
+                    groupIcon.x = 35 * scale;
+                    groupIcon.y = 76 * scale;
+                    
+                    typeIcon.x = 154 * scale;
+                    typeIcon.y = 76 * scale;
+                    
+                    ring.x = 68 * scale;
+                    ring.y = 35 * scale;
+                    ring.w = 79 * scale;
+                    ring.h = 68 * scale;
+                    
+                    codeText.x = middle;
+                    codeText.y = 20 * scale;
+                    
+                    nameText.x = middle;
+                    nameText.y = 28 * scale;
+                    nameText.font = (6 * scale) + 'px Arial';
+                    
+                    layerText.x = middle;
+                    layerText.y = 112 * scale;
+                    layerText.color = "#FCC083";
+                    
+                    authorText.x = middle;
+                    authorText.y = 78 * scale;
+                    
+                    break;
+                case "production":
+                    pic.x = 56 * scale;
+                    pic.y = 33 * scale;
+                    pic.w = 53 * scale;
+                    pic.h = 53 * scale;
+                    
+                    groupIcon.x = 17 * scale;
+                    groupIcon.y = 30 * scale;
+                    
+                    typeIcon.x = 17 * scale;
+                    typeIcon.y = 62 * scale;
+                    
+                    ring.x = 25 * scale;
+                    ring.y = 99 * scale;
+                    ring.w = 68 * scale;
+                    ring.h = 9 * scale;
+                    
+                    codeText.x = 170 * scale;
+                    codeText.y = 26 * scale;
+                    
+                    nameText.x = 170 * scale;
+                    nameText.y = 71 * scale;
+                    nameText.font = (7 * scale) + 'px Arial';
+                    nameText.constraint = 60 * scale;
+                    nameText.lineHeight = 9 * scale;
+                    nameText.wrap = true;
+                    
+                    layerText.x = 170 * scale;
+                    layerText.y = 107 * scale;
+                    
+                    authorText.x = 82 * scale;
+                    authorText.y = 77 * scale;
+                    
+                    break;
+            }
+            
+            if(state == "concept" || state == "production")
+                ring.src = base + 'rings/' + levels[j][0] + '/linear_diff_' + difficulty + '.png';
+            
+            if(difficulty === 0)
+                ring = {};
+            
+            var data = [
+                    pic,
+                    portrait,
+                    groupIcon,
+                    typeIcon,
+                    ring,
+                    codeText,
+                    nameText,
+                    layerText,
+                    authorText
+                ];
+            
+            drawPicture(data, ctx, texture);
+            
+            return texture;
         }
+        
+        function drawPicture(data, ctx, texture) {
+            
+            var image = new Image();
+            var actual = data.shift();
+            
+            if(actual.src && actual.src != 'undefined') {
+            
+                image.onload = function() {
 
+
+                    if(actual.alpha)
+                        ctx.globalAlpha = actual.alpha;
+
+                    ctx.drawImage(image, actual.x, actual.y, actual.w, actual.h);
+                    if(texture)
+                        texture.needsUpdate = true;
+
+                    ctx.globalAlpha = 1;
+
+                    if(data.length !== 0) {
+
+                        if(data[0].text)
+                            drawText(data, ctx, texture);
+                        else
+                            drawPicture(data, ctx, texture);
+                    }
+                };
+                
+                image.onerror = function() {
+                    if(data.length !== 0) {
+                        if(data[0].text)
+                            drawText(data, ctx, texture);
+                        else
+                            drawPicture(data, ctx, texture);
+                    }
+                };
+                
+                image.crossOrigin="anonymous";
+                image.src = actual.src;
+            }
+            else {
+                if(data.length !== 0) {
+                    if(data[0].text)
+                        drawText(data, ctx, texture);
+                    else
+                        drawPicture(data, ctx, texture);
+                }
+            }
+        }
+        
+        function drawText(data, ctx, texture) {
+            
+            var actual = data.shift();
+            
+            //TODO: Set Roboto typo
+            
+            if(actual.color)
+                ctx.fillStyle = actual.color;
+            
+            ctx.font = actual.font;
+            
+            if(actual.constraint)
+                if(actual.wrap)
+                    helper.drawText(actual.text, actual.x, actual.y, ctx, actual.constraint, actual.lineHeight);
+                else
+                    ctx.fillText(actual.text, actual.x, actual.y, actual.constraint);
+            else
+                ctx.fillText(actual.text, actual.x, actual.y);
+            
+            if(texture)
+                texture.needsUpdate = true;
+            
+            ctx.fillStyle = "#FFFFFF";
+            
+            if(data.length !== 0)
+                drawText(data, ctx);
+        }
+        
         return element;
     };
     
@@ -435,41 +677,47 @@ function ViewManager() {
      */
     this.transform = function(goal, duration) {
 
+        var i, l;
+        
+        duration = duration || 2000;
+        
         TWEEN.removeAll();
 
-        this.lastTargets = goal;
+        if(goal) {
+            this.lastTargets = goal;
 
-        for (var i = 0; i < objects.length; i++) {
+            for (i = 0; i < objects.length; i++) {
 
-            var object = objects[i];
-            var target = goal[i];
+                var object = objects[i];
+                var target = goal[i];
 
-            new TWEEN.Tween(object.position)
-                .to({
-                    x: target.position.x,
-                    y: target.position.y,
-                    z: target.position.z
-                }, Math.random() * duration + duration)
-                .easing(TWEEN.Easing.Exponential.InOut)
-                .start();
+                new TWEEN.Tween(object.position)
+                    .to({
+                        x: target.position.x,
+                        y: target.position.y,
+                        z: target.position.z
+                    }, Math.random() * duration + duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
 
-            new TWEEN.Tween(object.rotation)
-                .to({
-                    x: target.rotation.x,
-                    y: target.rotation.y,
-                    z: target.rotation.z
-                }, Math.random() * duration + duration)
-                .easing(TWEEN.Easing.Exponential.InOut)
-                .start();
+                new TWEEN.Tween(object.rotation)
+                    .to({
+                        x: target.rotation.x,
+                        y: target.rotation.y,
+                        z: target.rotation.z
+                    }, Math.random() * duration + duration)
+                    .easing(TWEEN.Easing.Exponential.InOut)
+                    .start();
 
+            }
+
+            if (goal == this.targets.table) {
+                headers.show(duration);
+            } else {
+                headers.hide(duration);
+            }
         }
-
-        if (goal == this.targets.table) {
-            headers.show(duration);
-        } else {
-            headers.hide(duration);
-        }
-
+        
         new TWEEN.Tween(this)
             .to({}, duration * 2)
             .onUpdate(render)
@@ -492,9 +740,8 @@ function ViewManager() {
         
         for (var i = 0; i < table.length; i++) {
 
-            var element = this.createElement(i);
-
-            var object = new THREE.CSS3DObject(element);
+            var object = this.createElement(i);
+            
             object.position.x = 0;
             object.position.y = 0;
             object.position.z = 80000;
@@ -511,7 +758,7 @@ function ViewManager() {
 
             if (layers[table[i].layer].super_layer) {
 
-                object.position.x = ((section[row]) * 140) - (columnWidth * groupsQtty * 140 / 2);
+                object.position.x = ((section[row]) * window.TILE_DIMENSION.width) - (columnWidth * groupsQtty * window.TILE_DIMENSION.width / 2);
 
                 section[row]++;
 
@@ -519,13 +766,13 @@ function ViewManager() {
 
                 //Column (X)
                 var column = table[i].groupID;
-                object.position.x = (((column * (columnWidth) + section[row][column]) + column) * 140) - (columnWidth * groupsQtty * 140 / 2);
+                object.position.x = (((column * (columnWidth) + section[row][column]) + column) * window.TILE_DIMENSION.width) - (columnWidth * groupsQtty * window.TILE_DIMENSION.width / 2);
 
                 section[row][column]++;
             }
 
 
-            object.position.y = -((layerPosition[row]) * 180) + (layersQtty * 180 / 2);
+            object.position.y = -((layerPosition[row]) * window.TILE_DIMENSION.height) + (layersQtty * window.TILE_DIMENSION.height / 2);
 
             this.targets.table.push(object);
 
@@ -540,4 +787,35 @@ function ViewManager() {
         };
     };
     
+    /**
+     * Takes away all the tiles except the one with the id
+     * @param {Number} [id]            The id to let alone
+     * @param {Number} [duration=2000] Duration of the animation
+     */
+    this.letAlone = function(id, duration) {
+        
+        var i, _duration = duration || 2000,
+            distance = camera.getMaxDistance();
+        
+        TWEEN.removeAll();
+        
+        for(i = 0; i < objects.length; i++) {
+            
+            if(i === id) continue;
+            
+            new TWEEN.Tween(objects[i].position)
+            .to({
+                x: 0,
+                y: 0,
+                z: distance
+            }, Math.random() * _duration + _duration)
+            .easing(TWEEN.Easing.Exponential.InOut)
+            .start();
+        }
+        
+        new TWEEN.Tween(this)
+            .to({}, _duration * 2)
+            .onUpdate(render)
+            .start();
+    };
 }

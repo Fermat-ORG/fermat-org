@@ -4,32 +4,41 @@ var table = [],
     scene = new THREE.Scene(),
     renderer,
     objects = [],
-    headers = null;
+    headers = null,
+    actualView = 'start',
+    stats = null;
 
-$.ajax({
+//Global constants
+var TILE_DIMENSION = {
+    width : 234,
+    height : 140
+},
+    TILE_SPACING = 20;
+
+/*$.ajax({
     url: "get_plugins.php",
     method: "GET"
 }).success(
     function(lists) {
         var l = JSON.parse(lists);
         viewManager.fillTable(l);
-        $('#splash').fadeTo(0, 500, function() {
+        $('#splash').fadeTo(2000, 0, function() {
             $('#splash').remove();
             init();
             setTimeout(animate, 500);
         });
     }
-);
+);*/
 
-/*var l = JSON.parse(testData);
+var l = JSON.parse(testData);
     
-    fillTable(l);
+    viewManager.fillTable(l);
     
-    $('#splash').fadeTo(0, 500, function() {
-            $('#splash').remove();
+    $('#splash').fadeTo(2000, 0, function() {
+            $('#splash').hide();
             init();
             setTimeout( animate, 500);
-        });*/
+        });
 
 function init() {
 
@@ -42,21 +51,26 @@ function init() {
     headers = new Headers(dimensions.columnWidth, dimensions.superLayerMaxHeight, dimensions.groupsQtty,
                           dimensions.layersQtty, dimensions.superLayerPosition);
     
-    renderer = new THREE.CSS3DRenderer();
+    var light = new THREE.AmbientLight(0xFFFFFF);
+    scene.add( light );
+    renderer = new THREE.WebGLRenderer({antialias : true, logarithmicDepthBuffer : true});
     renderer.setSize(window.innerWidth, window.innerHeight);
     renderer.domElement.style.position = 'absolute';
+    renderer.setClearColor(0xffffff);
     document.getElementById('container').appendChild(renderer.domElement);
 
-    camera = new Camera(new THREE.Vector3(0, 0, dimensions.columnWidth * dimensions.groupsQtty * 140),
+    camera = new Camera(new THREE.Vector3(0, 0, dimensions.columnWidth * dimensions.groupsQtty * TILE_DIMENSION.width),
         renderer,
         render);
-
+    // uncomment for testing
+    create_stats();
 
     //
 
-    $('.backButton').click(function() {
+    $('#backButton').click(function() {
         changeView(viewManager.targets.table);
     });
+
     $('#legendButton').click(function() {
 
         var legend = document.getElementById('legend');
@@ -70,11 +84,179 @@ function init() {
         }
     });
 
+   $('#browserRightButton').click(function() {
+       if ( actualView === 'start' )
+            goToView('stack','start');
+       else if ( actualView === 'stack' )
+            goToView('table','stack');
+       else 
+            goToView('stack','table');
+    });
+    
+    $('#browserLeftButton').click(function() {
+       if ( actualView === 'start' ) ;
+       //     goToView('stack');
+       else if ( actualView === 'stack' )
+            goToView('start','stack');
+       else if ( actualView === 'table' )
+            goToView('stack','table');
+    });
+    $('#container').click(onClick);
+
     //Disabled Menu
     //initMenu();
 
-    viewManager.transform(viewManager.targets.table, 4000);
+    goToView('start','null');
+    
+    /*setTimeout(function() {
+        var loader = new Loader();
+        loader.findThemAll();
+    }, 2000);*/
 }
+
+/**
+ * created by Miguel Celedon
+ * modified by Ricardo Delgado
+ * Changes the actual state of the viewer
+ * @param {String} name The name of the target state
+ */
+function goToView ( current, previous ) {
+        
+    actualView = current;
+
+    var anima = null;
+
+    switch(current) {
+        case 'table':
+            
+            var legendBtn = document.getElementById('legendButton');
+  
+            legendBtn.style.display = 'block';
+
+            $(legendBtn).fadeTo(1000, 1);
+
+            headers.transformTable();
+            
+
+            modifyButtonRight( 'View Table', 'block', 10, -50 );
+           
+            modifyButtonLeft( 'View Dependencies', 'block', 10, null );
+
+            
+            break;
+        case 'start':
+
+           $('#splash').show();
+
+           headers.transformHead();    
+
+          if ( previous === 'stack' ) anima = null; 
+
+          else anima = 450;
+
+           modifyButtonRight( 'View Dependencies', 'block', 10, anima );
+
+           modifyButtonLeft( 'Book', 'block', 10, anima );
+
+            break;
+        case 'stack':
+
+            $('#splash').hide();
+            
+            headers.transformStack();
+
+            if ( previous === 'table' ) anima = -50; 
+
+            else anima = 450; 
+
+            modifyButtonRight( 'View Table', 'block', anima, 10);
+           
+            modifyButtonLeft( 'start', 'block', anima, 10);
+            
+            break;
+
+        default:
+            actualView = 'start';
+            break;
+    }
+}
+
+/**
+ * created by Ricardo Delgado
+ * editing text , animation and control button state
+ * @param {String} label, The button name.
+ * @param {String} view, The view button.
+ * @param {int} start, button to start the animation.
+ * @param {int} end, button to end the animation.
+ */
+function modifyButtonRight ( label, view, start, end) {
+	
+var browserButton = document.getElementById('browserRightButton');
+
+$(browserButton).fadeTo(1000, 1, function(){ 
+
+	browserButton.style.display=view;
+    browserButton.innerHTML = label;
+
+if ( end ) update_animation_button ( start, end, browserButton );
+
+
+		});
+
+}
+/**
+ * Created by Ricardo Delgado
+ * Editing text , animation and control button state
+ * @param {String} label, The button name.
+ * @param {String} view, The view button.
+ * @param {int} start, button to start the animation.
+ * @param {int} end, button to end the animation.
+ */
+function modifyButtonLeft ( label, view, start, end ) {
+	
+var browserButton = document.getElementById('browserLeftButton');
+
+$(browserButton).fadeTo(1000, 1, function(){ 
+
+    browserButton.style.display=view;
+    browserButton.innerHTML = label;
+
+if ( end ) update_animation_button ( start, end, browserButton );
+
+            });
+
+}
+
+/**
+ * Created by Ricardo Delgado
+ * Animation creation button
+ * @param {int} start, button to start the animation.
+ * @param {int} end, button to end the animation.
+ * @param {id} button, Pin ID.
+ */
+function update_animation_button ( start, end, button ) {
+
+var position = {x: start, rotation: 0};
+
+var tween = new TWEEN.Tween(position)
+					.to({x: end, rotation: 360}, 5000)
+					.delay(1000)
+					.easing(TWEEN.Easing.Elastic.InOut)
+					.onUpdate(update);
+
+				tween.start();
+
+function update() {
+
+	button.style.bottom = position.x + 'px';
+	button.style.webkitTransform = 'rotate(' + Math.floor(position.rotation) + 'deg)';
+	button.style.MozTransform = 'rotate(' + Math.floor(position.rotation) + 'deg)';
+
+			}
+
+}
+
+
 
 function initMenu() {
 
@@ -117,11 +299,12 @@ function changeView(targets) {
         viewManager.transform(targets, 2000);
 }
 
-function onElementClick() {
+function onElementClick(id) {
 
-    var id = this.id;
+    //var id = this.id;
 
-    var image = document.getElementById('img-' + id);
+    //var image = document.getElementById('img-' + id);
+    
 
     if (camera.getFocus() == null) {
 
@@ -134,14 +317,14 @@ function onElementClick() {
         }, 3000);
         camera.disable();
 
-        if (image != null) {
+        /*if (image != null) {
 
             var handler = function() {
                 onImageClick(id, image, handler);
             };
 
             image.addEventListener('click', handler, true);
-        } else {}
+        } else {}*/
     }
 
     function onImageClick(id, image, handler) {
@@ -284,6 +467,25 @@ function onElementClick() {
     }
 }
 
+function onClick(e) {
+    
+    var mouse = new THREE.Vector2(0, 0),
+        clicked = [];
+    
+    if(actualView === 'table' && !camera.moving) {
+    
+        //Obtain normalized click location (-1...1)
+        mouse.x = ((e.clientX - renderer.domElement.offsetLeft) / renderer.domElement.width) * 2 - 1;
+        mouse.y = - ((e.clientY - renderer.domElement.offsetTop) / renderer.domElement.height) * 2 + 1;
+        
+        clicked = camera.rayCast(mouse, objects);
+        
+        if(clicked && clicked.length > 0) {
+            onElementClick(clicked[0].object.userData.id);
+        }
+    }
+}
+
 function animate() {
 
     requestAnimationFrame(animate);
@@ -291,7 +493,25 @@ function animate() {
     TWEEN.update();
 
     camera.update();
+
+    if ( stats ) stats.update();
 }
+     /**
+     * Created by Ricardo Delgado
+     * create stats for performance testing 
+     */
+   function create_stats(){ 
+
+    stats = new Stats();
+    stats.setMode(0);
+    stats.domElement.style.position = 'absolute';
+    stats.domElement.style.left    = '0px';
+    stats.domElement.style.top   = '0px';
+    stats.domElement.style.display  = 'block';
+    var contai = document.getElementById("container");
+    contai.appendChild(stats.domElement);
+
+    }
 
 function render() {
 

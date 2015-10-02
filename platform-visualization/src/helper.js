@@ -5,10 +5,11 @@ function Helper() {
 
     /**
      * Hides an element vanishing it and then eliminating it from the DOM
-     * @param {DOMElement} element  The element to eliminate
-     * @param {Number} duration Duration of the fade animation
+     * @param {DOMElement} element         The element to eliminate
+     * @param {Number}     [duration=1000] Duration of the fade animation
+     * @param {Boolean}    [keep=false]     If set true, don't remove the element, just dissapear
      */
-    this.hide = function(element, duration) {
+    this.hide = function(element, duration, keep) {
 
         var dur = duration || 1000,
             el = element;
@@ -18,7 +19,10 @@ function Helper() {
         }
 
         $(el).fadeTo(duration, 0, function() {
-            $(el).remove();
+            if(keep)
+                el.style.display = 'none';
+            else
+                $(el).remove();
         });
     };
 
@@ -122,8 +126,6 @@ function Helper() {
         }
     };
     
-    
-
     /**
      * Prints difficulty as stars
      * @param   {Number} value Difficulty to represent (max 5)
@@ -146,7 +148,54 @@ function Helper() {
 
         return result;
     };
+    
+    /**
+     * Loads a texture and applies it to the given mesh
+     * @param {String}   source     Address of the image to load
+     * @param {Mesh}     object     Mesh to apply the texture
+     * @param {Function} [callback] Function to call when texture gets loaded, with mesh as parameter
+     */
+    this.applyTexture = function(source, object, callback) {
+        
+        var loader = new THREE.TextureLoader();
+        
+        loader.load(
+            source,
+            function(tex) {
+                tex.minFilter = THREE.NearestFilter;
+                tex.needsUpdate = true;
+                object.material.map = tex;
+                object.needsUpdate = true;
+                
+                //console.log(tex.image.currentSrc);
+                
+                if(callback != null && typeof(callback) === 'function')
+                    callback(object);
+            });
+    };
+    
+    this.drawText = function(text, x, y, context, maxWidth, lineHeight) {
+    
+        var words = text.split(' ');
+        var line = '';
 
+        for(var n = 0; n < words.length; n++) {
+          var testLine = line + words[n] + ' ';
+          var metrics = context.measureText(testLine);
+          var testWidth = metrics.width;
+          if (testWidth > maxWidth && n > 0) {
+            context.fillText(line, x, y);
+            line = words[n] + ' ';
+            y -= lineHeight;
+          }
+          else {
+            line = testLine;
+          }
+        }
+        context.fillText(line, x, y);
+
+        return y - lineHeight;
+    };
 }
 
 // Make helper a static object
