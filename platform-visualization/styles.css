@@ -171,13 +171,14 @@ button:active {
 
 #browserRightButton {
     position : fixed;
-    right : 10px;
+    right : 100px;
+    bottom : 10px;
     z-index: 10;
 }
 #browserLeftButton {
     position : fixed;
     bottom : 10px;
-    left : 10px;
+    left : 100px;
     z-index: 10;
 }
 
