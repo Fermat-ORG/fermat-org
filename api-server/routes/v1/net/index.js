@@ -20,28 +20,6 @@ var cache = new Cache({
 router.get('/servrs', function (req, res, next) {
 	'use strict';
 	try {
-		// we search for body in cache
-		/*var body = cache.getBody(req);
-		if (body) {
-			// we send it
-			res.status(200).send(body);
-		} else {
-			// we create it
-			netMod.getServerNetwork(req, function (error, result) {
-				if (error) {
-					res.status(200).send(error);
-				} else {
-					if (result) {
-						cache.setBody(req, result);
-						res.status(200).send(result);
-					} else {
-						res.status(200).send({
-							message: "NO WAVE YET"
-						});
-					}
-				}
-			});
-		}*/
 		netMod.getServer(req, function (error, result) {
 			if (error) {
 				res.status(200).send(error);

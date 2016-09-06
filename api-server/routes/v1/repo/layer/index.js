@@ -84,7 +84,6 @@ router.post('/', function(req, res, next) {
 					console.log("Permission granted");
 					if (!security.isValidData(req.body.name) || //
 						!security.isValidData(req.body.lang) || //
-						//!security.ifExistIsValidData(req.body.suprlay) || //
 						!security.ifExistIsValidData(req.body.order)) {
 						res.status(412).send({
 							"message": "missing or invalid data"
@@ -113,7 +112,7 @@ router.post('/', function(req, res, next) {
  * @apiVersion 0.0.1
  * @apiName ListLayers
  * @apiGroup Repo-Layer
- * @apiDescription get a list of layer to the architecture of fermat.
+ * @apiDescription Get a list of layer to the architecture of fermat.
  */
 router.get('/', function(req, res, next) {
 	'use strict';
@@ -187,7 +186,6 @@ router.put('/:layer_id', function(req, res, next) {
 					if (!security.isValidData(req.params.layer_id) || //
 						!security.ifExistIsValidData(req.body.name) || //
 						!security.ifExistIsValidData(req.body.lang) ||
-						//!security.ifExistIsValidData(req.body.suprlay) ||
 						!security.ifExistIsValidData(req.body.order)) {
 						res.status(412).send({
 							"message": "missing or invalid data"

@@ -513,14 +513,14 @@
             "type": "String",
             "optional": false,
             "field": "scope",
-            "description": "<p>xxxxx.</p>"
+            "description": "<p>Scope developer.</p>"
           },
           {
             "group": "Parameter",
             "type": "Number",
             "optional": false,
             "field": "percnt",
-            "description": "<p>xxxx.</p>"
+            "description": "<p>Percentage of development.</p>"
           }
         ]
       }
@@ -718,21 +718,21 @@
             "type": "String",
             "optional": false,
             "field": "role",
-            "description": "<p>xxxx.</p>"
+            "description": "<p>Role developer.</p>"
           },
           {
             "group": "Parameter",
             "type": "String",
             "optional": false,
             "field": "scope",
-            "description": "<p>xxxxx.</p>"
+            "description": "<p>Scope developer.</p>"
           },
           {
             "group": "Parameter",
             "type": "Number",
             "optional": false,
             "field": "percnt",
-            "description": "<p>xxxx.</p>"
+            "description": "<p>Percentage of development.</p>"
           }
         ]
       }
@@ -1142,7 +1142,14 @@
             "type": "String",
             "optional": false,
             "field": "desc",
-            "description": "<p>Process description</p>"
+            "description": "<p>Process description.</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "tags",
+            "description": "<p>Labels issues. Example (a, b, c).</p>"
           },
           {
             "group": "Parameter",
@@ -1351,6 +1358,13 @@
             "optional": false,
             "field": "desc",
             "description": "<p>Process description.</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "tags",
+            "description": "<p>Labels issues. Example (a, b, c).</p>"
           },
           {
             "group": "Parameter",
