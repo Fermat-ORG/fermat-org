@@ -887,7 +887,7 @@
     "version": "0.0.1",
     "name": "ListLayers",
     "group": "Repo_Layer",
-    "description": "<p>get a list of layer to the architecture of fermat.</p>",
+    "description": "<p>Get a list of layer to the architecture of fermat.</p>",
     "filename": "routes/v1/repo/layer/index.js",
     "groupTitle": "Repo_Layer"
   },
@@ -1223,6 +1223,13 @@
             "optional": false,
             "field": "order",
             "description": "<p>Indicates the position where the step this with respect to other.</p>"
+          },
+          {
+            "group": "Parameter",
+            "type": "String",
+            "optional": false,
+            "field": "next",
+            "description": "<p>Id the next process.</p>"
           }
         ]
       }

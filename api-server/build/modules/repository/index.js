@@ -1,4 +1,3 @@
-//var libxml = require('libxmljs');
 var lockMod = require('./lock');
 var procMod = require('./process');
 var compMod = require('./component');
@@ -310,26 +309,6 @@ exports.checkManifest = function(req, next) {
 			} else {
 				try {
 					return next(null, "FermatManifest Cool");
-					/*var xsdDoc = libxml.parseXml(res_xsd);
-					loadMod.getManifestWithExt('xml', function (err_xml, res_xml) {
-						if (err_xml) {
-							next(err_xml, null);
-						} else {
-							try {
-								var xmlDoc = libxml.parseXml(res_xml);
-								xmlDoc.validate(xsdDoc);
-								if (xmlDoc.validationErrors.length > 0) {
-									return next(null, xmlDoc.validationErrors);
-								}
-								return next(null, "FermatManifest Cool");
-							} catch (e) {
-								return next(null, {
-									"message": e.message,
-									"location": e
-								});
-							}
-						}
-					});*/
 				} catch (e) {
 					return next(null, {
 						"message": e.message,
@@ -353,7 +332,7 @@ exports.checkManifest = function(req, next) {
 exports.addProc = function(req, next) {
 	'use strict';
 	try {
-		procMod.insOrUpdProc(req.body.platfrm, req.body.name, req.body.desc, req.body.prev, req.body.next, function(err, res) {
+		procMod.insOrUpdProc(req.body.platfrm, req.body.name, req.body.desc, req.body.prev, req.body.next, req.body.tags, function(err, res) {
 			if (err) {
 				next(err, null);
 			} else {
@@ -397,7 +376,7 @@ exports.getProc = function(req, next) {
 exports.uptProc = function(req, next) {
 	'use strict';
 	try {
-		procMod.updateProcById(req.params.proc_id, req.body.platfrm, req.body.name, req.body.desc, req.body.prev, req.body.next, function(err, res) {
+		procMod.updateProcById(req.params.proc_id, req.body.platfrm, req.body.name, req.body.desc, req.body.prev, req.body.next, req.body.tags, function(err, res) {
 			if (err) {
 				next(err, null);
 			} else {
